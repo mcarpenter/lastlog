@@ -12,6 +12,10 @@ grows quickly or is aggressively rolled.
 The lastlog should not be confused with lastlogin(1M) from the
 Solaris accounting facility.
 
+Usage:
+
+  lastlog
+
 Sample output:
 
   0      root      Mon Oct 12 11:50:21 2009  pts/10   saturn
