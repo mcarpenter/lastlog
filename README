@@ -1,0 +1,25 @@
+
+lastlog
+
+lastlog is a small program to display the contents of Solaris'
+/var/adm/lastlog. This is a binary file that gets updated upon each
+user login.
+
+Although similar information can be extracted from wtmpx(4) (using
+last(1)), reading the lastlog may be simpler or quicker if wtmpx(4)
+grows quickly or is aggressively rolled.
+
+The lastlog should not be confused with lastlogin(1M) from the
+Solaris accounting facility.
+
+Sample output:
+
+  0      root      Mon Oct 12 11:50:21 2009  pts/10   saturn
+  10001  felipe    Wed Sep 17 14:15:02 2008  pts/8    122.106.27.6
+  10013  boris     Mon Sep 21 12:23:54 2009  pts/18   jupiter
+
+
+To build:
+
+    make
+
