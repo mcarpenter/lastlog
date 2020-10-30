@@ -23,27 +23,32 @@
 #include <errno.h>
 #include <string.h>
 #include <pwd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #define LASTLOG "/var/adm/lastlog"
 #define RECORD_LEN (sizeof(struct lastlog))
 
 int main(int argc, char *argv[]) {
 
-    FILE *fp = NULL;
+    int fd = -1;
     struct lastlog record;
     struct lastlog null_record;
     char *name = NULL;
     char *time = NULL;
     struct passwd *pw = NULL;
     int uid = 0;
+    ssize_t bytes_read = 0;
 
-    if(NULL == (fp = fopen(LASTLOG, "r"))) {
-        perror("lastlog");
+    if(-1 == (fd = open(LASTLOG, O_RDONLY|O_LARGEFILE))) {
+        perror("lastlog: open()");
         return 2;
     }
 
     memset(&null_record, 0, RECORD_LEN);
-    while(1 == fread((void *)&record, RECORD_LEN, (size_t) 1, fp)) {
+    while(RECORD_LEN == (bytes_read = read(fd, (void *)&record, RECORD_LEN))) {
         if(memcmp((void *)&record, (void *)&null_record, RECORD_LEN)) {
             time = ctime(&record.ll_time);
             time[24] = '\0'; /* Erase newline, ew */
@@ -58,13 +63,15 @@ int main(int argc, char *argv[]) {
         uid++;
     }
 
-    if(ferror(fp)) {
-        fprintf(stderr, "lastlog: read error\n");
+    if(-1 == bytes_read) {
+        perror("lastlog: read()");
         return 1;
-    } else {
-        (void) fclose(fp); /* Don't care */
+    } else if(0 == bytes_read) {
+        (void)close(fd); /* Don't care */
         return 0;
+    } else {
+        (void)fprintf(stderr, "lastlog: read(): got only %d/%d bytes\n", bytes_read, RECORD_LEN);
+        return 1;
     }
 
 }
-
