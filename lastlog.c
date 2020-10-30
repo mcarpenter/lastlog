@@ -33,34 +33,50 @@
 
 int main(int argc, char *argv[]) {
 
-    int fd = -1;
-    struct lastlog record;
-    struct lastlog null_record;
-    char *name = NULL;
-    char *time = NULL;
-    struct passwd *pw = NULL;
-    int uid = 0;
-    ssize_t bytes_read = 0;
-
-    if(-1 == (fd = open(LASTLOG, O_RDONLY|O_LARGEFILE))) {
+    int fd = open(LASTLOG, O_RDONLY|O_LARGEFILE);
+    if(-1 == fd) {
         perror("lastlog: open()");
         return 2;
     }
 
+    struct lastlog record;
+    struct lastlog null_record;
     memset(&null_record, 0, RECORD_LEN);
+
+    uid_t uid = 0;
+    ssize_t bytes_read = 0;
     while(RECORD_LEN == (bytes_read = read(fd, (void *)&record, RECORD_LEN))) {
         if(memcmp((void *)&record, (void *)&null_record, RECORD_LEN)) {
-            time = ctime(&record.ll_time);
-            time[24] = '\0'; /* Erase newline, ew */
-            if((pw = getpwuid((uid_t) uid))) {
+            char time[26];
+            time_t timestamp = record.ll_time; /* Struct has time32_t */
+            if(!ctime_r(&timestamp, time)) {
+                perror("lastlog: ctime()");
+                return 1;
+            }
+            time[24] = '\0'; /* Erase newline */
+            char *name = "";
+            struct passwd *pw = getpwuid((uid_t) uid);
+            if(pw) {
                 name = pw->pw_name;
                 name[8] = '\0'; /* Truncate to 8 characters */
-            } else {
-                name = "";
             }
-            printf("%-5i  %-8s  %s  %-8s  %s\n", uid, name, time, record.ll_line, record.ll_host);
+            printf("%-10lu  %-8s  %s  %-8s  %s\n", uid, name, time, record.ll_line, record.ll_host);
+            uid++;
+        } else {
+            off_t seeked_to = llseek(fd, (off_t)(uid+1)*RECORD_LEN, SEEK_DATA);
+            if(-1 == seeked_to) {
+                perror("lastlog: llseek()");
+                return 1;
+            }
+            off_t overran_by = seeked_to % RECORD_LEN;
+            if(overran_by) {
+                if(-1 == llseek(fd, -overran_by, SEEK_CUR)) {
+                    perror("lastlog: llseek()");
+                    return 1;
+                }
+            }
+            uid = seeked_to / RECORD_LEN;
         }
-        uid++;
     }
 
     if(-1 == bytes_read) {
