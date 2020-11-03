@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
                 name = pw->pw_name;
                 name[8] = '\0'; /* Truncate to 8 characters */
             }
-            printf("%-10lu  %-8s  %s  %-8s  %s\n", uid, name, time, record.ll_line, record.ll_host);
+            printf("%-10u  %-8s  %s  %-8s  %s\n", uid, name, time, record.ll_line, record.ll_host);
             uid++;
         } else {
             off_t seeked_to = llseek(fd, (off_t)(uid+1)*RECORD_LEN, SEEK_DATA);
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
         (void)close(fd); /* Don't care */
         return 0;
     } else {
-        (void)fprintf(stderr, "lastlog: read(): got only %d/%d bytes\n", bytes_read, RECORD_LEN);
+        (void)fprintf(stderr, "lastlog: read(): got only %ld/%ld bytes\n", bytes_read, RECORD_LEN);
         return 1;
     }
 
