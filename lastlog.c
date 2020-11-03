@@ -33,7 +33,8 @@
 
 int main(int argc, char *argv[]) {
 
-    int fd = open(LASTLOG, O_RDONLY|O_LARGEFILE);
+    const char *path = (argc > 1 ? argv[1] : LASTLOG);
+    int fd = open(path, O_RDONLY|O_LARGEFILE);
     if(-1 == fd) {
         perror("lastlog: open()");
         return 2;

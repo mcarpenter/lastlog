@@ -12,9 +12,11 @@ grows quickly or is aggressively rolled.
 The lastlog should not be confused with lastlogin(1M) from the
 Solaris accounting facility.
 
+
 Usage:
 
-  lastlog
+  lastlog [path]
+
 
 Sample output:
 
